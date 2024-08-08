@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Cat, Info, PawPrint } from "lucide-react";
+import { Cat, Info, PawPrint, Heart } from "lucide-react";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 const catFacts = [
   "Cats have excellent night vision and can see at one-sixth the light level required for human vision.",
@@ -15,18 +16,31 @@ const catFacts = [
 ];
 
 const catBreeds = [
-  { name: "Siamese", description: "Known for their distinctive coloring and vocal nature." },
-  { name: "Maine Coon", description: "One of the largest domesticated cat breeds with a distinctive physical appearance." },
-  { name: "Persian", description: "Recognized for their long fur and flat faces." },
-  { name: "Bengal", description: "A hybrid breed with a wild appearance resembling leopards." },
-  { name: "Scottish Fold", description: "Famous for their folded ears and round faces." },
+  { name: "Siamese", description: "Known for their distinctive coloring and vocal nature.", image: "https://upload.wikimedia.org/wikipedia/commons/2/25/Siam_lilacpoint.jpg" },
+  { name: "Maine Coon", description: "One of the largest domesticated cat breeds with a distinctive physical appearance.", image: "https://upload.wikimedia.org/wikipedia/commons/5/5f/Maine_Coon_cat_by_Tomitheos.JPG" },
+  { name: "Persian", description: "Recognized for their long fur and flat faces.", image: "https://upload.wikimedia.org/wikipedia/commons/1/15/White_Persian_Cat.jpg" },
+  { name: "Bengal", description: "A hybrid breed with a wild appearance resembling leopards.", image: "https://upload.wikimedia.org/wikipedia/commons/b/ba/Paintedcats_Red_Star_standing.jpg" },
+  { name: "Scottish Fold", description: "Famous for their folded ears and round faces.", image: "https://upload.wikimedia.org/wikipedia/commons/5/5d/Adult_Scottish_Fold.jpg" },
 ];
 
 const Index = () => {
   const [currentFactIndex, setCurrentFactIndex] = useState(0);
+  const [likedBreeds, setLikedBreeds] = useState({});
+
+  useEffect(() => {
+    const interval = setInterval(nextFact, 10000); // Auto-advance fact every 10 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   const nextFact = () => {
     setCurrentFactIndex((prevIndex) => (prevIndex + 1) % catFacts.length);
+  };
+
+  const toggleLike = (breedName) => {
+    setLikedBreeds(prev => ({
+      ...prev,
+      [breedName]: !prev[breedName]
+    }));
   };
 
   return (
@@ -41,20 +55,25 @@ const Index = () => {
       </motion.h1>
       
       <div className="max-w-4xl mx-auto">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="relative mb-12"
-        >
-          <img 
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Cat03.jpg/1200px-Cat03.jpg" 
-            alt="Cute cat" 
-            className="mx-auto object-cover w-full h-[500px] rounded-lg shadow-2xl"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-lg"></div>
-          <h2 className="absolute bottom-6 left-6 text-4xl font-bold text-white">Discover the World of Cats</h2>
-        </motion.div>
+        <Carousel className="mb-12">
+          <CarouselContent>
+            {catBreeds.map((breed, index) => (
+              <CarouselItem key={breed.name}>
+                <div className="relative">
+                  <img 
+                    src={breed.image} 
+                    alt={breed.name}
+                    className="mx-auto object-cover w-full h-[500px] rounded-lg shadow-2xl"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-lg"></div>
+                  <h2 className="absolute bottom-6 left-6 text-4xl font-bold text-white">{breed.name}</h2>
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious />
+          <CarouselNext />
+        </Carousel>
         
         <Tabs defaultValue="facts" className="mb-12">
           <TabsList className="grid w-full grid-cols-2">
@@ -74,16 +93,18 @@ const Index = () => {
                 <CardDescription>Fascinating tidbits about our feline friends</CardDescription>
               </CardHeader>
               <CardContent>
-                <motion.p 
-                  key={currentFactIndex}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="text-lg mb-4"
-                >
-                  {catFacts[currentFactIndex]}
-                </motion.p>
+                <AnimatePresence mode="wait">
+                  <motion.p 
+                    key={currentFactIndex}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                    className="text-lg mb-4"
+                  >
+                    {catFacts[currentFactIndex]}
+                  </motion.p>
+                </AnimatePresence>
                 <Button onClick={nextFact}>Next Fact</Button>
               </CardContent>
             </Card>
@@ -104,11 +125,19 @@ const Index = () => {
                       transition={{ duration: 0.3, delay: index * 0.1 }}
                       className="flex items-start"
                     >
-                      <Cat className="mr-2 h-5 w-5 text-purple-600 mt-1" />
-                      <div>
+                      <img src={breed.image} alt={breed.name} className="w-16 h-16 object-cover rounded-full mr-4" />
+                      <div className="flex-grow">
                         <h3 className="font-semibold">{breed.name}</h3>
                         <p className="text-sm text-gray-600">{breed.description}</p>
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => toggleLike(breed.name)}
+                        className={`transition-colors ${likedBreeds[breed.name] ? 'text-red-500' : 'text-gray-400'}`}
+                      >
+                        <Heart className="h-5 w-5" fill={likedBreeds[breed.name] ? "currentColor" : "none"} />
+                      </Button>
                     </motion.li>
                   ))}
                 </ul>
